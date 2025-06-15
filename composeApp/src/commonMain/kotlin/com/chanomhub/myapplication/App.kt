@@ -1,42 +1,67 @@
 package com.chanomhub.myapplication
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.chanomhub.myapplication.screens.HomeScreen
+import com.chanomhub.myapplication.screens.ProfileScreen
+import com.chanomhub.myapplication.screens.SearchScreen
+import com.chanomhub.myapplication.screens.SettingsScreen
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-import ch_multiplatform.composeapp.generated.resources.Res
-import ch_multiplatform.composeapp.generated.resources.compose_multiplatform
+// Screen enum สำหรับแต่ละหน้า
+enum class Screen(val title: String, val icon: ImageVector) {
+    HOME("หน้าแรก", Icons.Filled.Home),
+    SEARCH("ค้นหา", Icons.Filled.Search),
+    PROFILE("โปรไฟล์", Icons.Filled.Person),
+    SETTINGS("ตั้งค่า", Icons.Filled.Settings)
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
+    var selectedScreen by remember { mutableStateOf(Screen.HOME) }
+
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    Screen.entries.forEach { screen ->
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = screen.icon,
+                                    contentDescription = screen.title
+                                )
+                            },
+                            label = { Text(screen.title) },
+                            selected = selectedScreen == screen,
+                            onClick = { selectedScreen = screen }
+                        )
+                    }
+                }
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when (selectedScreen) {
+                    Screen.HOME -> HomeScreen()
+                    Screen.SEARCH -> SearchScreen()
+                    Screen.PROFILE -> ProfileScreen()
+                    Screen.SETTINGS -> SettingsScreen()
                 }
             }
         }
