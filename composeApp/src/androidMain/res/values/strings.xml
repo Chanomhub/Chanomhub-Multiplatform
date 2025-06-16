@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CH-Multiplatform</string>
+    <string name="use_streaming_syntax">Stream</string>
 </resources>

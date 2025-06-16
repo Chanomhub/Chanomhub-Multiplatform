@@ -44,7 +44,6 @@ kotlin {
                 outputFileName = "composeApp.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
                         add(rootDirPath)
                         add(projectDirPath)
                     }
@@ -60,12 +59,14 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            // Add Android-specific Ktor engine
-            implementation("io.ktor:ktor-client-android:2.3.12")
+            // ✅ Android-specific Ktor engine - updated to consistent version
+            implementation("io.ktor:ktor-client-android:3.1.0")
+            // ✅ Updated OkHttp engine to consistent version
+            implementation("io.ktor:ktor-client-okhttp:3.1.0")
         }
 
         commonMain.dependencies {
-            // Existing dependencies
+            // Existing Compose dependencies
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -75,24 +76,21 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
-            // Ktor client dependencies - COMPLETE SET
-            implementation("io.ktor:ktor-client-core:2.3.12")
-            implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
-            // Add ALL required Ktor plugins
-            implementation("io.ktor:ktor-client-logging:2.3.12")
-            implementation("io.ktor:ktor-client-auth:2.3.12")
-            implementation("io.ktor:ktor-client-encoding:2.3.12")
+            // ✅ Ktor dependencies - ALL updated to consistent 3.1.0 version
+            implementation("io.ktor:ktor-client-core:3.1.0")
+            implementation("io.ktor:ktor-client-content-negotiation:3.1.0")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.0")
+            implementation("io.ktor:ktor-client-logging:3.1.0")
 
-            // Add kotlinx.serialization for JSON parsing
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+            // ✅ Kotlinx Serialization
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
-            // Use Coil 3.x consistently
+            // ✅ Coil dependencies
             implementation("io.coil-kt.coil3:coil-compose:3.2.0")
             implementation("io.coil-kt.coil3:coil-network-ktor3:3.2.0")
 
-            // Add coroutines for LaunchedEffect
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+            // ✅ Coroutines
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
         }
 
         commonTest.dependencies {
@@ -102,15 +100,15 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
-            // Add desktop-specific Ktor engine
-            implementation("io.ktor:ktor-client-cio:2.3.12")
+            // Desktop-specific Ktor engine - updated to consistent version
+            implementation("io.ktor:ktor-client-cio:3.1.0")
         }
 
-        // Add iOS-specific dependencies
+        // iOS dependencies
         val iosMain by creating {
             dependsOn(commonMain.get())
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.12")
+                implementation("io.ktor:ktor-client-darwin:3.1.0")
             }
         }
 
@@ -130,20 +128,58 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
+
+    // ✅ Add this to handle DEX version
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    // ✅ Add this to specify DEX version
+    androidComponents {
+        onVariants { variant ->
+            variant.packaging.resources.excludes.addAll(
+                listOf(
+                    "/META-INF/{AL2.0,LGPL2.1}",
+                    "/META-INF/INDEX.LIST",
+                    "/META-INF/DEPENDENCIES",
+                    "/META-INF/io.netty.versions.properties",
+                    "/META-INF/ktor-client-*.kotlin_module"
+                )
+            )
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/ktor-client-*.kotlin_module"
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isDebuggable = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        getByName("debug") {
+            isMinifyEnabled = false
+            isDebuggable = true
+            // ✅ Add this for debug builds
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
 }
 
@@ -151,16 +187,7 @@ dependencies {
     debugImplementation(compose.uiTooling)
     implementation("androidx.compose.material:material-icons-core:1.6.8")
     implementation("androidx.compose.material:material-icons-extended:1.6.8")
-}
 
-compose.desktop {
-    application {
-        mainClass = "com.chanomhub.myapplication.MainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.chanomhub.myapplication"
-            packageVersion = "1.0.0"
-        }
-    }
+    // ✅ Multidex support
+    implementation("androidx.multidex:multidex:2.0.1")
 }
