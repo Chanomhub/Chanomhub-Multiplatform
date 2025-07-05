@@ -185,8 +185,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    implementation("androidx.compose.material:material-icons-core:1.6.8")
-    implementation("androidx.compose.material:material-icons-extended:1.6.8")
+    implementation("androidx.compose.material:material-icons-core:1.7.8")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // ✅ Multidex support
     implementation("androidx.multidex:multidex:2.0.1")
