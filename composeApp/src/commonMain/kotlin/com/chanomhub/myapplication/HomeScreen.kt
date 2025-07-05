@@ -30,16 +30,30 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
-data class Author(val id: Int, val name: String, val bio: String, val image: String)
+data class Author(
+    val id: Int,
+    val name: String,
+    val bio: String,
+    val image: String
+)
 
 @Serializable
-data class Platform(val id: Int, val name: String)
+data class Platform(
+    val id: Int,
+    val name: String
+)
 
 @Serializable
-data class Tag(val id: Int, val name: String)
+data class Tag(
+    val id: Int,
+    val name: String
+)
 
 @Serializable
-data class Category(val id: Int, val name: String)
+data class Category(
+    val id: Int,
+    val name: String
+)
 
 @Serializable
 data class Article(
@@ -91,8 +105,11 @@ fun createHttpClient() = HttpClient {
     expectSuccess = false
 }
 
+// HomeScreen.kt - Updated to use slug
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onArticleClick: (String) -> Unit = {} // Changed from Int to String for slug
+) {
     var articles by remember { mutableStateOf<List<Article>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -189,7 +206,10 @@ fun HomeScreen() {
             else -> {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(articles) { article ->
-                        ArticleCard(article = article)
+                        ArticleCard(
+                            article = article,
+                            onArticleClick = onArticleClick
+                        )
                     }
                 }
             }
@@ -198,9 +218,14 @@ fun HomeScreen() {
 }
 
 @Composable
-fun ArticleCard(article: Article) {
+fun ArticleCard(
+    article: Article,
+    onArticleClick: (String) -> Unit // Changed from Int to String for slug
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { /* Handle click */ },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onArticleClick(article.slug) }, // Use slug instead of id
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {

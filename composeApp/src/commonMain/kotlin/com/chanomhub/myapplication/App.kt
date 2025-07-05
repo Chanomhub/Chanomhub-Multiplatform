@@ -26,28 +26,66 @@ enum class Screen(val title: String, val icon: ImageVector) {
     SETTINGS("ตั้งค่า", Icons.Filled.Settings)
 }
 
+// Navigation state to handle article details
+sealed class NavigationState {
+    object Home : NavigationState()
+    object Search : NavigationState()
+    object Profile : NavigationState()
+    object Settings : NavigationState()
+    data class ArticleDetail(val articleSlug: String) : NavigationState()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
     var selectedScreen by remember { mutableStateOf(Screen.HOME) }
+    var navigationState by remember { mutableStateOf<NavigationState>(NavigationState.Home) }
+
+    // Function to navigate to article detail using slug
+    val navigateToArticle = { articleSlug: String ->
+        navigationState = NavigationState.ArticleDetail(articleSlug)
+    }
+
+    // Function to navigate back
+    val navigateBack = {
+        navigationState = when (selectedScreen) {
+            Screen.HOME -> NavigationState.Home
+            Screen.SEARCH -> NavigationState.Search
+            Screen.PROFILE -> NavigationState.Profile
+            Screen.SETTINGS -> NavigationState.Settings
+        }
+    }
+
+    // Update navigation state when screen changes
+    LaunchedEffect(selectedScreen) {
+        navigationState = when (selectedScreen) {
+            Screen.HOME -> NavigationState.Home
+            Screen.SEARCH -> NavigationState.Search
+            Screen.PROFILE -> NavigationState.Profile
+            Screen.SETTINGS -> NavigationState.Settings
+        }
+    }
 
     MaterialTheme {
         Scaffold(
             bottomBar = {
-                NavigationBar {
-                    Screen.entries.forEach { screen ->
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    imageVector = screen.icon,
-                                    contentDescription = screen.title
-                                )
-                            },
-                            label = { Text(screen.title) },
-                            selected = selectedScreen == screen,
-                            onClick = { selectedScreen = screen }
-                        )
+                // Hide bottom navigation when viewing article details
+                if (navigationState !is NavigationState.ArticleDetail) {
+                    NavigationBar {
+                        Screen.entries.forEach { screen ->
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = screen.icon,
+                                        contentDescription = screen.title
+                                    )
+                                },
+                                label = { Text(screen.title) },
+                                selected = selectedScreen == screen,
+                                onClick = { selectedScreen = screen }
+                            )
+                        }
                     }
                 }
             }
@@ -57,11 +95,26 @@ fun App() {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                when (selectedScreen) {
-                    Screen.HOME -> HomeScreen()
-                    Screen.SEARCH -> SearchScreen()
-                    Screen.PROFILE -> ProfileScreen()
-                    Screen.SETTINGS -> SettingsScreen()
+                val currentNavState = navigationState
+                when (currentNavState) {
+                    is NavigationState.Home -> {
+                        HomeScreen(onArticleClick = navigateToArticle)
+                    }
+                    is NavigationState.Search -> {
+                        SearchScreen(onArticleClick = navigateToArticle)
+                    }
+                    is NavigationState.Profile -> {
+                        ProfileScreen()
+                    }
+                    is NavigationState.Settings -> {
+                        SettingsScreen()
+                    }
+                    is NavigationState.ArticleDetail -> {
+                        ArticleDetailScreen(
+                            articleSlug = currentNavState.articleSlug,
+                            onBackClick = navigateBack
+                        )
+                    }
                 }
             }
         }
